@@ -6,7 +6,7 @@ var PLUGIN_INFO =
         <updateURL>http://raw.github.com/nishikawasasaki/KeySnail_YammerChecker/master/yammerChecker.ks.js</updateURL>
         <license>The MIT License</license>
         <author homepage="http://nishikawasasaki.hatenablog.com/">nishikawasasaki</author>
-        <version>0.2.4.16</version>
+        <version>0.2.5.0</version>
         <minVersion>1.0.0</minVersion>
         <include>main</include>
         <provides>
@@ -56,6 +56,7 @@ function httpGet(url) {
 
 // オンの場合には処理開始
 function main() {
+
     if (status) {
         yammerUpdateCheck();
     } else {
@@ -92,59 +93,58 @@ function yammerUpdateCheck() {
 // ID から投稿者情報を取得
 function getSenderInfo(jsObject, id) {
 
-    // var apiUrl = user_api_url + id + ".json";
-    // var str = httpGet(apiUrl);
-    // var jsObject = JSON.parse(str);
-
     var senderName = "";
     var senderImageUrl = "";
 
     if (users[id] != null) {
+        // ユーザ情報がキャッシュ済みの場合
 
         senderName = users[id][0];
         senderImageUrl = users[id][1];
 
     } else {
-
+        // ユーザ情報がキャッシュに存在しない場合
  
+        // references からユーザ情報を探索
         var refLength = jsObject.references.length;
-        var elem = null;
 
+        var elem = null;
         for (var i = 0; i < refLength; i++) {
 
             elem = jsObject.references[i];
 
             if (elem.type == "user") {
-
                 if (elem.id == id) {
                     senderName = elem.full_name;
                     senderImageUrl = elem.mugshot_url;
 
+                    // ユーザ情報はキャッシュしておく
                     setUserInfo(id, senderName, senderImageUrl);
                 }
-            
             }
-        
         }
-
     }
 
     return [senderName, senderImageUrl];
 
 }
 
+// ユーザ情報のキャッシュ
 function setUserInfo(id, name, imgUrl) {
     users[id] = [name, imgUrl];
 }
 
 
+// プロンプトに yammer のフィードを表示
 function viewYammer() {
 
+    // フィード情報を API から取得
     var str = httpGet(feed_api_url);
     var jsObject = JSON.parse(str);    
 
     var count = 0;
     var posts = [];
+
     var length = jsObject.messages.length;
     var element = null;
     for (var i = 0; i < 10; i++) {
@@ -154,6 +154,7 @@ function viewYammer() {
         posts.push([senderInfo[1], senderInfo[0], element.body.parsed, date.toLocaleString(), element.web_url]);
     }
 
+    // プロンプトに表示
     prompt.selector({
 
         message: "pattern:",
