@@ -1,2 +1,4 @@
-Keysnail_YammerChecker
+KeySnail_YammerChecker
 ======================
+
+keySnail plugin for yammer
