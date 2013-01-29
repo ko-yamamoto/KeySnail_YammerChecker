@@ -6,13 +6,14 @@ var PLUGIN_INFO =
         <updateURL>http://raw.github.com/nishikawasasaki/KeySnail_YammerChecker/master/yammerChecker.ks.js</updateURL>
         <license>The MIT License</license>
         <author homepage="http://nishikawasasaki.hatenablog.com/">nishikawasasaki</author>
-        <version>0.2.5.1</version>
+        <version>0.3.0.0</version>
         <minVersion>1.0.0</minVersion>
         <include>main</include>
         <provides>
-        <ext>yammer-chehk-toggle</ext>
-        <ext>one-check-yammer</ext>
         <ext>view-yammer</ext>
+        <ext>one-check-yammer</ext>
+        <ext>yammer-chehk-toggle</ext>
+        <ext>get-yammer-token</ext>
         </provides>
     <detail><![CDATA[
             === 使い方 ===
@@ -47,11 +48,18 @@ var lastPostId = 0;
 
 var users = {};
 
+var access_token = null;
+
 function httpGet(url) {
     var xmlHttp = null;
 
     xmlHttp = new XMLHttpRequest();
     xmlHttp.open( "GET", url, false );
+
+    if (access_token != null) {
+        xmlHttp.setRequestHeader("Authorization", "Bearer " + access_token);
+    }
+
     xmlHttp.send( null );
     return xmlHttp.responseText;
 }
@@ -62,15 +70,12 @@ function httpPost(url, data) {
 
     xmlHttp = new XMLHttpRequest();
     xmlHttp.open("POST", url, true);
+    xmlHttp.setRequestHeader("Authorization", "Bearer " + access_token);
     xmlHttp.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    xmlHttp.setRequestHeader("Content-length", data.length);
-    xmlHttp.setRequestHeader("Connection", "close");
     xmlHttp.onreadystatechange = function() {
-	    if(xmlHttp.readyState == 4 && xmlHttp.status == 200) {
-		    display.showPopup("yammer checker", "Like sending");
-	    } else {
-            display.showPopup("yammer checker", "Failed Liking " + xmlHttp.status);
-        }
+	    if(xmlHttp.readyState == 4 && xmlHttp.status == 201) {
+            display.showPopup("yammer checker", "Like!");
+	    }
     };
 
     xmlHttp.send(data);
@@ -218,11 +223,39 @@ function viewYammer() {
 
 function addLike(id) {
 
-    var data = "message_id=" + id;
+    if (access_token == null) {
+        authorize();
+    } else {
 
-    // API 実行
-    var str = httpPost(like_api_url, data);
+        var data = "message_id=" + id;
+        // API 実行
+        var str = httpPost(like_api_url, data);
+
+    }
 }
+
+
+// アクセストークンを取得する
+function authorize() {
+
+    gBrowser.loadOneTab("https://www.yammer.com/dialog/oauth?client_id=M96fG7qdJpcI48u3Vee2RA&redirect_uri=https://github.com/nishikawasasaki/KeySnail_YammerChecker&response_type=token",null, null, null, false);
+ 
+    // gPrompt.close();
+    prompt.read(
+        M({ ja: "認証が終了したら Enter キーを押してください",
+            en: "Press Enter When Authorization Finished:"}),
+        function (str) {
+
+            let param = window.content.location.href.split("#")[1];
+            access_token = param.split("=")[1];
+
+            display.showPopup("yammer checker", "get access_token");
+        }
+    );   
+}
+
+
+
 
 
 ext.add("yammer-chehk-toggle", function () {
@@ -239,3 +272,7 @@ ext.add("one-check-yammer", function () {
 ext.add("view-yammer", function () {
     viewYammer();
 }, L("yammer を見る"));
+
+ext.add("get-yammer-token", function () {
+    authorize();
+}, L("yammer のアクセストークンを取得"));
