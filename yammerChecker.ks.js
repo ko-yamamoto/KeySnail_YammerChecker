@@ -26,7 +26,7 @@ const pOptions = plugins.setupOptions("yammerplugin", {
     "update_interval" : {
         preset: 180,
         description: M({
-            en: "Update interbal seconds (default 60 seconds)",
+            en: "Update interbal seconds (default 180 seconds)",
             ja: "新着確認間隔秒 (デフォルトは 180秒)"
         }),
         type: "number"
